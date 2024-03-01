@@ -68,30 +68,35 @@ const handleMessageFromPeer = async(message,MemberId)=>{
   }
 }
 
+let createPeerConnection = async(MemberId)=>{
+  peerConnection = new RTCPeerConnection(servers);
+  remoteStream = new MediaStream()
+  document.getElementById('user2').srcObject = remoteStream
+  
+
+  localStream.getTracks().forEach((track)=>{
+    peerConnection.addTrack(track,localStream)
+  })
+
+  peerConnection.ontrack = (event)=>{
+    event.streams[0].getTracks().forEach((track)=>{
+      remoteStream.addTrack(track)
+    })
+  }
+
+  peerConnection.onicecandidate = async(event) =>{
+    if(event.candidate){
+      client.sendMessageToPeer({text:JSON.stringify({'type':'candidate','candidate':event.candidate})},MemberId)
+    }
+  }
+
+}
+
 let createOffer = async(MemberId)=>{
     try{
 
-        peerConnection = new RTCPeerConnection(servers);
-        remoteStream = new MediaStream()
-        document.getElementById('user2').srcObject = remoteStream
-        
-
-        localStream.getTracks().forEach((track)=>{
-          peerConnection.addTrack(track,localStream)
-        })
-
-        peerConnection.ontrack = (event)=>{
-          event.streams[0].getTracks().forEach((track)=>{
-            remoteStream.addTrack(track)
-          })
-        }
-
-        peerConnection.onicecandidate = async(event) =>{
-          if(event.candidate){
-            client.sendMessageToPeer({text:JSON.stringify({'type':'candidate','candidate':event.candidate})},MemberId)
-          }
-        }
-
+      await createPeerConnection(MemberId)
+       
         let offer = await peerConnection.createOffer()
         await peerConnection.setLocalDescription(offer)
 
@@ -106,27 +111,7 @@ let createOffer = async(MemberId)=>{
 const createAnswer = async (MemberId, offer) => {
   try {
 
-    
-    peerConnection = new RTCPeerConnection(servers);
-    remoteStream = new MediaStream()
-    document.getElementById('user2').srcObject = remoteStream
-    
-
-    localStream.getTracks().forEach((track)=>{
-      peerConnection.addTrack(track,localStream)
-    })
-
-    peerConnection.ontrack = (event)=>{
-      event.streams[0].getTracks().forEach((track)=>{
-        remoteStream.addTrack(track)
-      })
-    }
-
-    peerConnection.onicecandidate = async(event) =>{
-      if(event.candidate){
-        client.sendMessageToPeer({text:JSON.stringify({'type':'candidate','candidate':event.candidate})},MemberId)
-      }
-    }
+   await createPeerConnection(MemberId)
 
     
 
